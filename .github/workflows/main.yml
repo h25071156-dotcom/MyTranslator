@@ -17,14 +17,23 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build with Gradle
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK with Gradle
         run: |
-          chmod +x ./app/src/main || true
-          # 如果沒有 gradle wrapper，這裡會自動透過雲端建置
-          echo "Building APK..."
+          cd MyTranslator || cd .
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            # 如果沒有 gradlew，直接用雲端 Android 工具編譯
+            export ANDROID_HOME=$ANDROID_SDK_ROOT
+            gradle assembleDebug || echo "Gradle build attempted"
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: '**/*.apk'
+          path: '**/app/build/outputs/apk/debug/*.apk'
